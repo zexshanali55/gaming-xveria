@@ -1,0 +1,110 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import type { Edition, OrderStatus } from "@/generated/prisma";
+
+const text = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
+const int = (form: FormData, key: string) => {
+  const value = text(form, key);
+  return value === "" ? null : Math.round(Number(value));
+};
+
+function slugify(value: string) {
+  return value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f'’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+}
+
+/* ------------------------------------------------------------ products */
+
+export async function saveProduct(form: FormData) {
+  await requireAdmin();
+  const id = text(form, "id");
+  const title = text(form, "title");
+  const data = {
+    title,
+    slug: text(form, "slug") || slugify(title),
+    tagline: text(form, "tagline"),
+    description: text(form, "description"),
+    genre: text(form, "genre"),
+    platform: text(form, "platform"),
+    edition: (text(form, "edition") === "PHYSICAL" ? "PHYSICAL" : "DIGITAL") as Edition,
+    price: int(form, "price") ?? 0,
+    comparePrice: int(form, "comparePrice"),
+    image: text(form, "image"),
+    developer: text(form, "developer"),
+    releaseYear: int(form, "releaseYear"),
+    rating: Number(text(form, "rating") || 4.5),
+    stock: int(form, "stock") ?? 0,
+    featured: form.get("featured") === "on",
+    active: form.get("active") === "on",
+  };
+  if (!data.title || !data.image || !data.genre || !data.platform || data.price <= 0) {
+    throw new Error("Title, image, genre, platform and a price are required.");
+  }
+
+  if (id) await prisma.product.update({ where: { id }, data });
+  else await prisma.product.create({ data });
+
+  revalidatePath("/", "layout");
+  redirect("/admin/products");
+}
+
+export async function deleteProduct(form: FormData) {
+  await requireAdmin();
+  await prisma.product.delete({ where: { id: text(form, "id") } });
+  revalidatePath("/", "layout");
+  redirect("/admin/products");
+}
+
+/* ------------------------------------------------------------ orders */
+
+export async function updateOrderStatus(form: FormData) {
+  await requireAdmin();
+  const id = text(form, "id");
+  await prisma.order.update({ where: { id }, data: { status: text(form, "status") as OrderStatus } });
+  revalidatePath(`/admin/orders/${id}`);
+  revalidatePath("/admin/orders");
+}
+
+/* ------------------------------------------------------------ vouchers */
+
+export async function createVoucher(form: FormData) {
+  await requireAdmin();
+  const code = text(form, "code").toUpperCase().replace(/\s+/g, "");
+  const value = int(form, "value") ?? 0;
+  const percent = text(form, "kind") !== "flat";
+  if (!code || value <= 0 || (percent && value > 100)) throw new Error("Enter a code and a valid value.");
+  const expires = text(form, "expiresAt");
+  await prisma.voucher.upsert({
+    where: { code },
+    update: { percent, value, minTotal: int(form, "minTotal") ?? 0, maxUses: int(form, "maxUses"), expiresAt: expires ? new Date(expires) : null, active: true },
+    create: { code, percent, value, minTotal: int(form, "minTotal") ?? 0, maxUses: int(form, "maxUses"), expiresAt: expires ? new Date(expires) : null },
+  });
+  revalidatePath("/admin/vouchers");
+}
+
+export async function toggleVoucher(form: FormData) {
+  await requireAdmin();
+  const id = text(form, "id");
+  const voucher = await prisma.voucher.findUniqueOrThrow({ where: { id } });
+  await prisma.voucher.update({ where: { id }, data: { active: !voucher.active } });
+  revalidatePath("/admin/vouchers");
+}
+
+export async function deleteVoucher(form: FormData) {
+  await requireAdmin();
+  await prisma.voucher.delete({ where: { id: text(form, "id") } });
+  revalidatePath("/admin/vouchers");
+}
+
+/* ------------------------------------------------------------ users */
+
+export async function setUserRole(form: FormData) {
+  const admin = await requireAdmin();
+  const id = text(form, "id");
+  if (id === admin.id) return; // never demote yourself out of the panel
+  await prisma.user.update({ where: { id }, data: { role: text(form, "role") === "ADMIN" ? "ADMIN" : "CUSTOMER" } });
+  revalidatePath("/admin/users");
+}

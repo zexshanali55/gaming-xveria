@@ -1,0 +1,141 @@
+// Gaming Xveria — database schema.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7 takes the connection URL from prisma.config.ts (CLI) and from the
+// driver adapter (runtime), not from here.
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+/// DIGITAL = a key / download link sent by email. PHYSICAL = a boxed disc shipped to an address.
+enum Edition {
+  DIGITAL
+  PHYSICAL
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String?
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  orders       Order[]
+}
+
+model Product {
+  id            String      @id @default(cuid())
+  slug          String      @unique
+  title         String
+  tagline       String      @default("")
+  description   String
+  genre         String
+  platform      String
+  edition       Edition
+  price         Int
+  comparePrice  Int?
+  image         String
+  developer     String      @default("")
+  releaseYear   Int?
+  rating        Float       @default(4.5)
+  stock         Int         @default(50)
+  featured      Boolean     @default(false)
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orderItems    OrderItem[]
+}
+
+model Voucher {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  /// Percentage off when `percent` is true, otherwise a flat rupee amount.
+  percent    Boolean  @default(true)
+  value      Int
+  minTotal   Int      @default(0)
+  maxUses    Int?
+  used       Int      @default(0)
+  active     Boolean  @default(true)
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Order {
+  id            String         @id @default(cuid())
+  number        String         @unique
+  userId        String?
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name          String
+  email         String
+  phone         String
+  address       String?
+  city          String?
+  subtotal      Int
+  discount      Int            @default(0)
+  shipping      Int            @default(0)
+  total         Int
+  voucherCode   String?
+  status        OrderStatus    @default(PENDING)
+  paymentStatus PaymentStatus  @default(UNPAID)
+  transactionId String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  items         OrderItem[]
+  attempts      PaymentAttempt[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title     String
+  edition   Edition
+  platform  String
+  image     String
+  price     Int
+  quantity  Int
+}
+
+/// One handover to PayFast. The result coming back is checked against this row.
+model PaymentAttempt {
+  basketId      String    @id
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount        Int
+  mode          String
+  status        String    @default("PENDING")
+  transactionId String?
+  errorCode     String?
+  errorMessage  String?
+  paymentName   String?
+  settledAt     DateTime?
+  createdAt     DateTime  @default(now())
+}
