@@ -9,7 +9,6 @@ export default function Contact() {
       <p>Questions about an order, a key that won&apos;t activate, or a delivery? We reply within one working day.</p>
       <ul>
         <li>Email: <b>{site.email}</b></li>
-        <li>Phone / WhatsApp: <b>{site.phone}</b></li>
         <li>Address: <b>{site.address}</b></li>
         <li>Support hours: <b>{site.hours}</b></li>
       </ul>

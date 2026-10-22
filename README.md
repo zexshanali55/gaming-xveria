@@ -19,7 +19,7 @@ npm run db:seed             # games, vouchers NITRO10 / XVERIA20 / WELCOME1000, 
 npm run dev
 ```
 
-Default admin: `admin@gamingxveria.com` / `Xveria@2026`. Change it with `ADMIN_EMAIL` and `ADMIN_PASSWORD` before you seed.
+Default admin: `admin@gamingxveria.site` / `Xveria@2026`. Change it with `ADMIN_EMAIL` and `ADMIN_PASSWORD` before you seed.
 
 ## Deploy (live domain)
 

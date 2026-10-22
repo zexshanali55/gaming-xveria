@@ -42,7 +42,6 @@ export function Footer() {
           <ul className="space-y-2 text-ink-dim">
             <li><Link className="hover:text-neon" href="/contact">Contact us</Link></li>
             <li>{site.email}</li>
-            <li>{site.phone}</li>
             <li>{site.address}</li>
           </ul>
           <div className="mt-5 inline-flex items-center gap-2 border border-line px-3 py-2">

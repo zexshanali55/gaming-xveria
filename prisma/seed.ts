@@ -41,7 +41,7 @@ const vouchers = [
 for (const v of vouchers) await prisma.voucher.upsert({ where: { code: v.code }, update: {}, create: v });
 console.log(`✓ ${vouchers.length} vouchers`);
 
-const email = (process.env.ADMIN_EMAIL || "admin@gamingxveria.com").toLowerCase();
+const email = (process.env.ADMIN_EMAIL || "admin@gamingxveria.site").toLowerCase();
 const password = process.env.ADMIN_PASSWORD || "Xveria@2026";
 await prisma.user.upsert({
   where: { email },
