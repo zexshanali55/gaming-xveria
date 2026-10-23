@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AdminTitle, Pill, Table } from "@/components/admin";
 import { formatPrice } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
-import { asMode } from "@/lib/payfast";
+import { getPaymentMode } from "@/lib/settings";
 
 export default async function Dashboard() {
   const [revenue, paidCount, pending, products, users, recent] = await Promise.all([
@@ -13,7 +13,7 @@ export default async function Dashboard() {
     prisma.user.count(),
     prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
   ]);
-  const mode = asMode(process.env.PAYFAST_MODE);
+  const mode = await getPaymentMode();
 
   const stats = [
     ["Revenue", formatPrice(revenue._sum.total ?? 0)],

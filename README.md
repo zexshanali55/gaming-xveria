@@ -3,7 +3,7 @@
 A cyberpunk / Asphalt-themed game store built with Next.js 16 (App Router). Frontend and backend are both in this one app. Payment is **PayFast only**, ported from the Kavé store.
 
 - **Storefront:** home, game list with filters (`/games`), game page (`/games/[slug]`), cart, checkout, order confirmation, account login/signup
-- **Admin** (`/admin`): dashboard, orders (change status, see PayFast attempts), products (add/edit/delete), vouchers (create/toggle/delete), users (make or remove admin)
+- **Admin** (`/admin`): dashboard, orders (change status, see PayFast attempts), products (add/edit/delete), vouchers (create/toggle/delete), users (make or remove admin), settings (PayFast mode + connection test)
 - **Catalogue:** 63 real games with Steam cover art. Two kinds:
   - **Digital** (PC key). After payment the key and download link are emailed. No shipping.
   - **Physical** (PS5 / Xbox disc). Delivered to an address for a flat Rs 350.
@@ -29,7 +29,7 @@ Required environment variables: `DATABASE_URL`, `SITE_URL` (the https domain), `
 
 ## PayFast
 
-`PAYFAST_MODE` sets the mode:
+The mode is chosen in **Admin → Settings** (stored in the `Setting` table). Until it is set there, `PAYFAST_MODE` decides. The same page has **Test sandbox / Test live** buttons that request a PayFast access token (nothing is charged).
 
 - `mock`: no gateway. The payment is simulated, so you can walk the whole flow without credentials.
 - `sandbox`: uses the `PAYFAST_SANDBOX_*` credentials.

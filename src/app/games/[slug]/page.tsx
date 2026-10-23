@@ -4,16 +4,15 @@ import { notFound } from "next/navigation";
 import { AddToCart } from "@/components/AddToCart";
 import { EditionBadge } from "@/components/EditionBadge";
 import { ProductCard } from "@/components/ProductCard";
-import { cardSelect } from "@/lib/catalog";
+import { productBySlug } from "@/lib/catalog";
 import { formatPrice } from "@/lib/money";
-import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ slug: string }>;
 
 async function load(slug: string) {
-  return prisma.product.findFirst({ where: { slug, active: true } });
+  return (await productBySlug(slug))?.product ?? null;
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
@@ -22,15 +21,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function ProductPage({ params }: { params: Params }) {
-  const product = await load((await params).slug);
-  if (!product) notFound();
-
-  const related = await prisma.product.findMany({
-    where: { active: true, genre: product.genre, id: { not: product.id } },
-    select: cardSelect,
-    take: 4,
-    orderBy: { rating: "desc" },
-  });
+  const data = await productBySlug((await params).slug);
+  if (!data) notFound();
+  const { product, related } = data;
 
   const digital = product.edition === "DIGITAL";
   const off = product.comparePrice && product.comparePrice > product.price

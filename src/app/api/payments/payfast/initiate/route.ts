@@ -5,10 +5,11 @@ import {
   logPayment,
   mockSignature,
   newBasketId,
-  payfastConfig,
+  payfastConfigFor,
   requestAccessToken,
 } from "@/lib/payfast";
 import { prisma } from "@/lib/prisma";
+import { getPaymentMode } from "@/lib/settings";
 
 const schema = z.object({ orderId: z.string().min(1) });
 
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
   if (order.paymentStatus === "PAID") return fail("This order is already paid.", 409);
   if (order.total <= 0) return fail("There is nothing to pay on that order.", 409);
 
-  const config = payfastConfig();
+  const config = payfastConfigFor(await getPaymentMode());
   const basketId = newBasketId(order.number);
   const mobile = order.phone.replace(/[^0-9]/g, "");
 

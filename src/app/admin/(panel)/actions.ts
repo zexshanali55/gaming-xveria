@@ -1,9 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
+import { CATALOG_TAG } from "@/lib/catalog";
+import { asMode, payfastConfigFor, requestAccessToken } from "@/lib/payfast";
 import { prisma } from "@/lib/prisma";
+import { setPaymentMode } from "@/lib/settings";
 import type { Edition, OrderStatus } from "@/generated/prisma";
 
 const text = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
@@ -47,6 +50,7 @@ export async function saveProduct(form: FormData) {
   if (id) await prisma.product.update({ where: { id }, data });
   else await prisma.product.create({ data });
 
+  updateTag(CATALOG_TAG);
   revalidatePath("/", "layout");
   redirect("/admin/products");
 }
@@ -54,6 +58,7 @@ export async function saveProduct(form: FormData) {
 export async function deleteProduct(form: FormData) {
   await requireAdmin();
   await prisma.product.delete({ where: { id: text(form, "id") } });
+  updateTag(CATALOG_TAG);
   revalidatePath("/", "layout");
   redirect("/admin/products");
 }
@@ -107,4 +112,25 @@ export async function setUserRole(form: FormData) {
   if (id === admin.id) return; // never demote yourself out of the panel
   await prisma.user.update({ where: { id }, data: { role: text(form, "role") === "ADMIN" ? "ADMIN" : "CUSTOMER" } });
   revalidatePath("/admin/users");
+}
+
+/* ------------------------------------------------------------ settings */
+
+export async function savePaymentMode(form: FormData) {
+  await requireAdmin();
+  await setPaymentMode(asMode(text(form, "mode")));
+  revalidatePath("/admin", "layout");
+}
+
+/**
+ * Asks PayFast for an access token with the chosen mode's credentials — the
+ * same first step a real checkout takes. Nothing is charged.
+ */
+export async function testPayfast(form: FormData) {
+  await requireAdmin();
+  const mode = asMode(text(form, "mode"));
+  const result = await requestAccessToken(payfastConfigFor(mode), `TEST-${Date.now()}`, 10);
+  const status = result.ok ? "ok" : "fail";
+  const message = result.ok ? `${mode}: PayFast returned an access token.` : `${mode}: ${result.error}`;
+  redirect(`/admin/settings?test=${status}&msg=${encodeURIComponent(message)}`);
 }

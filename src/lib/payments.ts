@@ -17,6 +17,8 @@ import {
   validationHash,
   type PayfastResult,
 } from "@/lib/payfast";
+import { revalidateTag } from "next/cache";
+import { CATALOG_TAG } from "@/lib/catalog";
 import { prisma } from "@/lib/prisma";
 
 export type Settlement =
@@ -87,6 +89,8 @@ export async function settlePayfastResult(
           });
         }
       }
+      // Stock changed, so the cached "In stock / Sold out" may be stale.
+      revalidateTag(CATALOG_TAG, "max");
     }
 
     logPayment(source, { basketId: attempt.basketId, transactionId: result.transactionId, errCode: result.errCode, outcome: claimed.count ? "paid" : "paid already" });

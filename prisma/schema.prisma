@@ -139,3 +139,10 @@ model PaymentAttempt {
   settledAt     DateTime?
   createdAt     DateTime  @default(now())
 }
+
+/// Small key/value store for settings the admin can change without a redeploy.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

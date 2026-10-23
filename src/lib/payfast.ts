@@ -7,7 +7,8 @@
  *      its hosted page, sends the shopper back to SUCCESS_URL / FAILURE_URL and
  *      calls CHECKOUT_URL server-to-server with the same result.
  *
- * PAYFAST_MODE picks the mode:
+ * The mode is picked in Admin → Settings (stored in the DB, see lib/settings.ts),
+ * falling back to PAYFAST_MODE:
  *   mock    — no network call, an approved payment is simulated (signed by us)
  *   sandbox — https://ipguat.apps.net.pk with test credentials
  *   live    — https://ipg1.apps.net.pk
@@ -56,15 +57,12 @@ export function payfastConfigFor(mode: PayfastMode): PayfastConfig {
   };
 }
 
-export function payfastConfig(): PayfastConfig {
-  return payfastConfigFor(asMode(env("PAYFAST_MODE")));
-}
-
 export function configProblem(config: PayfastConfig): string | null {
   if (config.mode === "mock") return null;
+  const prefix = config.mode === "live" ? "PAYFAST_LIVE" : "PAYFAST_SANDBOX";
   const missing: string[] = [];
-  if (!config.merchantId) missing.push("PAYFAST_MERCHANT_ID");
-  if (!config.secureKey) missing.push("PAYFAST_SECURED_KEY");
+  if (!config.merchantId) missing.push(`${prefix}_MERCHANT_ID`);
+  if (!config.secureKey) missing.push(`${prefix}_SECURED_KEY`);
   return missing.length
     ? `${missing.join(" and ")} not set on the server, so ${config.mode} payments cannot be taken.`
     : null;
