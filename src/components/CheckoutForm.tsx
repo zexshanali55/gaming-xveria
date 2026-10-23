@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/CartProvider";
+import { LoadingLabel } from "@/components/Buttons";
 import { formatPrice } from "@/lib/money";
 import { goToPayfast } from "@/lib/payfast-client";
 
@@ -16,6 +17,7 @@ export function CheckoutForm({ user, payment, shippingFee }: { user: Prefill | n
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   // Coming back from PayFast with the Back button restores this page from the
   // bfcache with the button still busy — release it.
@@ -34,11 +36,12 @@ export function CheckoutForm({ user, payment, shippingFee }: { user: Prefill | n
 
   async function applyVoucher() {
     setVoucherError(null);
+    setChecking(true);
     const response = await fetch("/api/vouchers/check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, items }),
-    });
+    }).finally(() => setChecking(false));
     const data = await response.json();
     if (!response.ok) {
       setVoucher(null);
@@ -143,7 +146,7 @@ export function CheckoutForm({ user, payment, shippingFee }: { user: Prefill | n
 
         <div className="mt-6 flex gap-2">
           <input className="field uppercase" placeholder="Voucher code" value={code} onChange={(e) => setCode(e.target.value)} />
-          <button type="button" className="btn-neon !px-4" onClick={applyVoucher} disabled={!code.trim()}>Apply</button>
+          <button type="button" className="btn-neon !px-4" onClick={applyVoucher} disabled={!code.trim() || checking} data-loading={checking || undefined}><LoadingLabel loading={checking} text="">Apply</LoadingLabel></button>
         </div>
         {voucherError && <p className="mt-2 text-sm text-danger">{voucherError}</p>}
         {voucher && <p className="mt-2 text-sm text-ok">✓ {voucher.code} applied</p>}
@@ -158,7 +161,7 @@ export function CheckoutForm({ user, payment, shippingFee }: { user: Prefill | n
         </dl>
 
         {error && <p className="mt-4 border border-danger/50 bg-danger/10 p-3 text-sm text-danger">{error}</p>}
-        <button className="btn-volt mt-6 w-full" disabled={busy}>{busy ? "Connecting to PayFast…" : `Pay ${formatPrice(total)}`}</button>
+        <button className="btn-volt mt-6 w-full" disabled={busy} data-loading={busy || undefined}><LoadingLabel loading={busy} text="Connecting to PayFast">{`Pay ${formatPrice(total)}`}</LoadingLabel></button>
         <p className="mt-3 text-center text-xs text-ink-dim">
           By placing the order you agree to our <Link href="/terms" className="underline">terms</Link> and <Link href="/refund-policy" className="underline">refund policy</Link>.
         </p>

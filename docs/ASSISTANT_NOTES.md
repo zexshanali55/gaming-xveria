@@ -10,6 +10,17 @@ A running log for whoever works on this next (human or AI): what was decided, wh
 - `PAYFAST_SANDBOX_STORE_ID` is empty (optional, so it's left out of the form).
 - The Steam CDN serves all cover art. If Steam changes URLs, images break; consider self-hosting the art later.
 
+## 2026-10-23 (night): button loaders, button glitch, password eye, admin password reset
+
+- `src/components/Buttons.tsx` holds the shared pieces:
+  - `SubmitButton`: use it for every server-action form instead of `<button>`. It uses `useFormStatus` and shows the loader.
+  - `LoadingLabel`: for client-state buttons (login/signup, checkout Pay, voucher Apply).
+  - `BtnLoader`: hazard stripes, scan sweep, equaliser bars and fast glitch text. The original label stays invisible so the width doesn't jump.
+  - `PasswordInput`: has the eye toggle.
+  - `ButtonGlitch`: mounted once in the layout.
+- **Button glitch:** `ButtonGlitch` copies a hovered `.btn-volt`/`.btn-neon` label into `data-text` (delegated `pointerover`). A `::before` layer slices it like the nav. `::after` stays the shine sweep. No per-button changes are needed.
+- **Admin → Users → Change/Set password** (`components/UserPassword.tsx` modal, `setUserPassword` action: min 8 characters, must match the confirm field). It also turns a guest into a registered account. Existing sessions are not logged out (the cookie isn't tied to the password).
+
 ## 2026-10-23 (evening): cart popup, direct PayFast, editable payment text, icons
 
 - **Add-to-cart popup:** `CartProvider.add()` shows `CartToast` (bottom centre, above the phone tab bar) with "View cart (n)" for 3.5s. "Buy now" passes `{ silent: true }`. The toast is hidden on /cart and /checkout.

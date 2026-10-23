@@ -1,5 +1,6 @@
 import { deleteProduct, saveProduct } from "@/app/admin/(panel)/actions";
 import type { Product } from "@/generated/prisma";
+import { SubmitButton } from "@/components/Buttons";
 
 export function ProductForm({ product }: { product?: Product }) {
   const f = (label: string, name: keyof Product, props: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
@@ -48,7 +49,7 @@ export function ProductForm({ product }: { product?: Product }) {
           <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product?.featured} /> Featured</label>
           <label className="flex items-center gap-2"><input type="checkbox" name="active" defaultChecked={product?.active ?? true} /> Live on store</label>
         </div>
-        <button className="btn-volt">Save product</button>
+        <SubmitButton loadingText="Saving">Save product</SubmitButton>
       </form>
       {product && (
         <form action={deleteProduct} className="mt-4">

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Orbitron, Rajdhani } from "next/font/google";
+import { ButtonGlitch } from "@/components/Buttons";
 import { CartProvider } from "@/components/CartProvider";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://shared.akamai.steamstatic.com" crossOrigin="" />
       </head>
       <body className="flex min-h-screen flex-col">
+        <ButtonGlitch />
         <CartProvider>
           <Header />
           <main className="flex-1">{children}</main>

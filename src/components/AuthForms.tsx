@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { login, signup, type AuthState } from "@/app/account/actions";
+import { LoadingLabel, PasswordInput } from "@/components/Buttons";
 
 export function LoginForm({ admin = false }: { admin?: boolean }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(login, {});
@@ -9,9 +10,9 @@ export function LoginForm({ admin = false }: { admin?: boolean }) {
     <form action={action} className="space-y-4">
       {admin && <input type="hidden" name="admin" value="1" />}
       <label className="block"><span className="label">Email</span><input name="email" type="email" required className="field" /></label>
-      <label className="block"><span className="label">Password</span><input name="password" type="password" required className="field" /></label>
+      <label className="block"><span className="label">Password</span><PasswordInput name="password" required autoComplete="current-password" /></label>
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
-      <button className="btn-volt w-full" disabled={pending}>{pending ? "Logging in…" : "Log in"}</button>
+      <button className="btn-volt w-full" disabled={pending} data-loading={pending || undefined}><LoadingLabel loading={pending} text="Authenticating">Log in</LoadingLabel></button>
     </form>
   );
 }
@@ -23,9 +24,9 @@ function SignupForm() {
       <label className="block"><span className="label">Name</span><input name="name" required className="field" /></label>
       <label className="block"><span className="label">Email</span><input name="email" type="email" required className="field" /></label>
       <label className="block"><span className="label">Mobile (optional)</span><input name="phone" className="field" /></label>
-      <label className="block"><span className="label">Password</span><input name="password" type="password" minLength={8} required className="field" /></label>
+      <label className="block"><span className="label">Password</span><PasswordInput name="password" minLength={8} required autoComplete="new-password" /></label>
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
-      <button className="btn-volt w-full" disabled={pending}>{pending ? "Creating…" : "Create account"}</button>
+      <button className="btn-volt w-full" disabled={pending} data-loading={pending || undefined}><LoadingLabel loading={pending} text="Creating">Create account</LoadingLabel></button>
     </form>
   );
 }

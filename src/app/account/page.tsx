@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { formatPrice } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { logout } from "./actions";
+import { SubmitButton } from "@/components/Buttons";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Account" };
@@ -33,7 +34,7 @@ export default async function AccountPage() {
         </div>
         <div className="flex gap-3">
           {user.role === "ADMIN" && <Link href="/admin" className="btn-neon cut-sm">Admin panel</Link>}
-          <form action={logout}><button className="btn-neon cut-sm">Log out</button></form>
+          <form action={logout}><SubmitButton className="btn-neon cut-sm" loadingText="Logging out">Log out</SubmitButton></form>
         </div>
       </div>
 

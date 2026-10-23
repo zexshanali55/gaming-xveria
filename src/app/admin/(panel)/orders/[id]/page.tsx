@@ -3,6 +3,7 @@ import { AdminTitle, Pill } from "@/components/admin";
 import { formatPrice } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { updateOrderStatus } from "../../actions";
+import { SubmitButton } from "@/components/Buttons";
 
 const STATUSES = ["PENDING", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "FAILED"];
 
@@ -68,7 +69,7 @@ export default async function AdminOrder({ params }: { params: Promise<{ id: str
             <select id="status" name="status" defaultValue={order.status} className="field">
               {STATUSES.map((s) => <option key={s}>{s}</option>)}
             </select>
-            <button className="btn-volt mt-4 w-full">Update</button>
+            <SubmitButton className="btn-volt mt-4 w-full" loadingText="Updating">Update</SubmitButton>
           </form>
         </div>
       </div>

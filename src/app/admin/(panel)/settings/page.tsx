@@ -3,6 +3,7 @@ import { savePaymentMode, savePaymentText, saveShippingFee, testPayfast } from "
 import { configProblem, payfastConfigFor, type PayfastMode } from "@/lib/payfast";
 import { getPaymentMode, getPaymentText, getShippingFee, PAYMENT_TEXT_DEFAULTS } from "@/lib/settings";
 import { siteOrigin } from "@/lib/site-url";
+import { SubmitButton } from "@/components/Buttons";
 
 const MODES: { value: PayfastMode; title: string; note: string }[] = [
   { value: "mock", title: "Mock", note: "No real gateway. Every payment is approved instantly — for testing the flow." },
@@ -42,7 +43,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
               </label>
             );
           })}
-          <button className="btn-volt mt-2">Save mode</button>
+          <SubmitButton className="btn-volt mt-2" loadingText="Saving">Save mode</SubmitButton>
         </form>
       </section>
 
@@ -54,7 +55,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
             <span className="label">Charge (Rs)</span>
             <input name="fee" type="number" min={0} max={100000} step={1} required defaultValue={shippingFee} className="field w-40" />
           </label>
-          <button className="btn-volt">Save</button>
+          <SubmitButton loadingText="Saving">Save</SubmitButton>
           <span className="pb-3 text-sm text-ink-dim">Now: <span className={shippingFee ? "text-volt" : "text-ok"}>{shippingFee ? `Rs ${shippingFee}` : "Free"}</span></span>
         </form>
       </section>
@@ -71,7 +72,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
             <span className="label">Subheading</span>
             <textarea name="subtitle" maxLength={240} rows={3} defaultValue={payText.subtitle} placeholder={PAYMENT_TEXT_DEFAULTS.subtitle} className="field" />
           </label>
-          <button className="btn-volt">Save text</button>
+          <SubmitButton loadingText="Saving">Save text</SubmitButton>
         </form>
       </section>
 
@@ -85,7 +86,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
           {(["sandbox", "live"] as const).map((m) => (
             <form key={m} action={testPayfast}>
               <input type="hidden" name="mode" value={m} />
-              <button className="btn-neon cut-sm">Test {m}</button>
+              <SubmitButton className="btn-neon cut-sm" loadingText="Pinging">Test {m}</SubmitButton>
             </form>
           ))}
         </div>

@@ -2,7 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
+import { hashPassword, requireAdmin } from "@/lib/auth";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { asMode, payfastConfigFor, requestAccessToken } from "@/lib/payfast";
 import { prisma } from "@/lib/prisma";
@@ -112,6 +112,22 @@ export async function setUserRole(form: FormData) {
   if (id === admin.id) return; // never demote yourself out of the panel
   await prisma.user.update({ where: { id }, data: { role: text(form, "role") === "ADMIN" ? "ADMIN" : "CUSTOMER" } });
   revalidatePath("/admin/users");
+}
+
+export type PasswordState = { ok?: boolean; error?: string };
+
+/** Sets a new password for any user (also turns a guest into a registered account). */
+export async function setUserPassword(_prev: PasswordState, form: FormData): Promise<PasswordState> {
+  await requireAdmin();
+  const id = text(form, "id");
+  const password = String(form.get("password") ?? "");
+  const confirm = String(form.get("confirm") ?? "");
+  if (password.length < 8) return { error: "Use at least 8 characters." };
+  if (password.length > 128) return { error: "That password is too long." };
+  if (password !== confirm) return { error: "The two passwords don't match." };
+  await prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(password) } });
+  revalidatePath("/admin/users");
+  return { ok: true };
 }
 
 /* ------------------------------------------------------------ settings */

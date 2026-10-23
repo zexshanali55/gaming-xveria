@@ -2,6 +2,7 @@ import { AdminTitle, Table } from "@/components/admin";
 import { formatPrice } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { createVoucher, deleteVoucher, toggleVoucher } from "../actions";
+import { SubmitButton } from "@/components/Buttons";
 
 export default async function AdminVouchers() {
   const vouchers = await prisma.voucher.findMany({ orderBy: { createdAt: "desc" } });
@@ -16,7 +17,7 @@ export default async function AdminVouchers() {
         <label><span className="label">Min order</span><input name="minTotal" type="number" min={0} className="field" placeholder="0" /></label>
         <label><span className="label">Max uses</span><input name="maxUses" type="number" min={1} className="field" placeholder="∞" /></label>
         <label><span className="label">Expires</span><input name="expiresAt" type="date" className="field" /></label>
-        <button className="btn-volt sm:col-span-3 lg:col-span-7 lg:justify-self-start">Create / update voucher</button>
+        <SubmitButton className="btn-volt sm:col-span-3 lg:col-span-7 lg:justify-self-start" loadingText="Saving">Create / update voucher</SubmitButton>
       </form>
       <Table head={["Code", "Discount", "Min order", "Used", "Expires", "Status", ""]}>
         {vouchers.map((v) => (

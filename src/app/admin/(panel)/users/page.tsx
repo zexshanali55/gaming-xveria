@@ -1,4 +1,5 @@
 import { AdminTitle, Table } from "@/components/admin";
+import { UserPassword } from "@/components/UserPassword";
 import { prisma } from "@/lib/prisma";
 import { setUserRole } from "../actions";
 
@@ -11,7 +12,7 @@ export default async function AdminUsers() {
   return (
     <>
       <AdminTitle title={`Users (${users.length})`} />
-      <Table head={["Name", "Email", "Phone", "Account", "Orders", "Joined", "Role"]}>
+      <Table head={["Name", "Email", "Phone", "Account", "Orders", "Joined", "Role", "Password"]}>
         {users.map((u) => (
           <tr key={u.id} className="hover:bg-panel">
             <td className="px-3 py-3 font-semibold">{u.name}</td>
@@ -27,6 +28,9 @@ export default async function AdminUsers() {
                 <span className={u.role === "ADMIN" ? "text-volt" : ""}>{u.role}</span>
                 {u.passwordHash && <button className="text-xs text-neon hover:underline">{u.role === "ADMIN" ? "Demote" : "Make admin"}</button>}
               </form>
+            </td>
+            <td className="px-3 py-3">
+              <UserPassword key={u.id} user={{ id: u.id, name: u.name, email: u.email, registered: !!u.passwordHash }} />
             </td>
           </tr>
         ))}
