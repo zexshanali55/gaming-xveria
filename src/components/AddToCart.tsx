@@ -28,7 +28,7 @@ export function AddToCart({ product, disabled }: { product: Omit<CartLine, "quan
         type="button"
         className="btn-neon cut-sm flex-1"
         onClick={() => {
-          add(product);
+          add(product, 1, { silent: true });
           router.push("/checkout");
         }}
       >

@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/components/CartProvider";
-import { formatPrice, SHIPPING_FEE } from "@/lib/money";
+import { formatPrice } from "@/lib/money";
+import { goToPayfast } from "@/lib/payfast-client";
 
 interface Prefill { name: string; email: string; phone: string }
 
-export function CheckoutForm({ user }: { user: Prefill | null }) {
+export function CheckoutForm({ user, payment, shippingFee }: { user: Prefill | null; payment: { title: string; subtitle: string }; shippingFee: number }) {
   const { lines, subtotal, ready } = useCart();
-  const router = useRouter();
   const [form, setForm] = useState({ name: user?.name ?? "", email: user?.email ?? "", phone: user?.phone ?? "", address: "", city: "" });
   const [code, setCode] = useState("");
   const [voucher, setVoucher] = useState<{ code: string; discount: number } | null>(null);
@@ -18,9 +17,17 @@ export function CheckoutForm({ user }: { user: Prefill | null }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Coming back from PayFast with the Back button restores this page from the
+  // bfcache with the button still busy — release it.
+  useEffect(() => {
+    const reset = (event: PageTransitionEvent) => { if (event.persisted) setBusy(false); };
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
   const hasPhysical = lines.some((l) => l.edition === "PHYSICAL");
   const hasDigital = lines.some((l) => l.edition === "DIGITAL");
-  const shipping = hasPhysical ? SHIPPING_FEE : 0;
+  const shipping = hasPhysical ? shippingFee : 0;
   const discount = voucher?.discount ?? 0;
   const total = subtotal - discount + shipping;
   const items = lines.map((l) => ({ productId: l.productId, quantity: l.quantity }));
@@ -56,7 +63,11 @@ export function CheckoutForm({ user }: { user: Prefill | null }) {
       setBusy(false);
       return;
     }
-    router.push(`/checkout/pay/${data.orderId}`);
+    // Straight to PayFast — no intermediate page. If the handoff fails the order
+    // stays unpaid and can be retried from its order page.
+    const handoffError = await goToPayfast(data.orderId);
+    setError(handoffError);
+    setBusy(false);
   }
 
   if (!ready) return null;
@@ -107,8 +118,8 @@ export function CheckoutForm({ user }: { user: Prefill | null }) {
           <div className="mt-5 flex items-center gap-4 border border-neon bg-neon/10 p-4">
             <span className="grid h-5 w-5 place-items-center rounded-full border-2 border-neon"><span className="h-2 w-2 rounded-full bg-neon" /></span>
             <div>
-              <p className="font-display font-black text-neon">PayFast</p>
-              <p className="text-sm text-ink-dim">Debit / credit card, bank account or mobile wallet. You&apos;ll complete payment on PayFast&apos;s secure page.</p>
+              <p className="font-display font-black text-neon">{payment.title}</p>
+              <p className="text-sm text-ink-dim">{payment.subtitle}</p>
             </div>
           </div>
         </fieldset>
@@ -140,14 +151,14 @@ export function CheckoutForm({ user }: { user: Prefill | null }) {
         <dl className="mt-6 space-y-2 border-t border-line pt-4">
           <div className="flex justify-between"><dt className="text-ink-dim">Subtotal</dt><dd>{formatPrice(subtotal)}</dd></div>
           {discount > 0 && <div className="flex justify-between text-ok"><dt>Discount</dt><dd>−{formatPrice(discount)}</dd></div>}
-          <div className="flex justify-between"><dt className="text-ink-dim">Delivery</dt><dd>{shipping ? formatPrice(shipping) : "Free"}</dd></div>
+          <div className="flex justify-between"><dt className="text-ink-dim">Delivery</dt><dd className={shipping ? "" : "text-ok"}>{shipping ? formatPrice(shipping) : "Free"}</dd></div>
           <div className="flex justify-between border-t border-line pt-3 font-display text-xl font-black">
             <dt>Total</dt><dd className="text-volt">{formatPrice(total)}</dd>
           </div>
         </dl>
 
         {error && <p className="mt-4 border border-danger/50 bg-danger/10 p-3 text-sm text-danger">{error}</p>}
-        <button className="btn-volt mt-6 w-full" disabled={busy}>{busy ? "Placing order…" : `Pay ${formatPrice(total)} with PayFast`}</button>
+        <button className="btn-volt mt-6 w-full" disabled={busy}>{busy ? "Connecting to PayFast…" : `Pay ${formatPrice(total)}`}</button>
         <p className="mt-3 text-center text-xs text-ink-dim">
           By placing the order you agree to our <Link href="/terms" className="underline">terms</Link> and <Link href="/refund-policy" className="underline">refund policy</Link>.
         </p>

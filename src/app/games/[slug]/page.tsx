@@ -5,7 +5,8 @@ import { AddToCart } from "@/components/AddToCart";
 import { EditionBadge } from "@/components/EditionBadge";
 import { ProductCard } from "@/components/ProductCard";
 import { productBySlug } from "@/lib/catalog";
-import { formatPrice } from "@/lib/money";
+import { deliveryLabel, formatPrice } from "@/lib/money";
+import { getShippingFee } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function ProductPage({ params }: { params: Params }) {
-  const data = await productBySlug((await params).slug);
+  const [data, shippingFee] = await Promise.all([productBySlug((await params).slug), getShippingFee()]);
   if (!data) notFound();
   const { product, related } = data;
 
@@ -75,7 +76,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                   <>
                     <p className="font-display text-xs font-bold tracking-[0.2em] text-volt">◆ PHYSICAL DISC · HOME DELIVERY</p>
                     <p className="mt-2 text-ink-dim">
-                      Sealed original {product.platform} disc, delivered to your address in 2–5 working days. Flat Rs 350 delivery anywhere in Pakistan.
+                      Sealed original {product.platform} disc, delivered to your address in 2–5 working days. {deliveryLabel(shippingFee)}.
                     </p>
                   </>
                 )}

@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { asMode, payfastConfigFor, requestAccessToken } from "@/lib/payfast";
 import { prisma } from "@/lib/prisma";
-import { setPaymentMode } from "@/lib/settings";
+import { SETTINGS_TAG, setPaymentMode, setPaymentText, setShippingFee } from "@/lib/settings";
 import type { Edition, OrderStatus } from "@/generated/prisma";
 
 const text = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
@@ -120,6 +120,22 @@ export async function savePaymentMode(form: FormData) {
   await requireAdmin();
   await setPaymentMode(asMode(text(form, "mode")));
   revalidatePath("/admin", "layout");
+}
+
+export async function saveShippingFee(form: FormData) {
+  await requireAdmin();
+  const fee = int(form, "fee") ?? 0;
+  if (fee < 0 || fee > 100000) throw new Error("Enter a delivery charge between 0 and 100,000.");
+  await setShippingFee(fee);
+  updateTag(SETTINGS_TAG);
+  revalidatePath("/", "layout");
+}
+
+export async function savePaymentText(form: FormData) {
+  await requireAdmin();
+  await setPaymentText({ title: text(form, "title").slice(0, 60), subtitle: text(form, "subtitle").slice(0, 240) });
+  revalidatePath("/admin/settings");
+  revalidatePath("/checkout");
 }
 
 /**

@@ -44,7 +44,8 @@ src/components/             Header, MobileNav (phone bottom tabs), Footer, Produ
                             (cart in localStorage), CheckoutForm, PayfastHandoff, Skeletons, admin.tsx
 src/lib/payfast.ts          gateway: config per mode, token request, form fields, hash checks
 src/lib/payments.ts         settlePayfastResult(): the ONLY place an order becomes PAID
-src/lib/settings.ts         runtime settings in the Setting table (payment mode)
+src/lib/settings.ts         runtime settings in the Setting table (payment mode, checkout payment text)
+src/lib/payfast-client.ts   browser handoff: goToPayfast(orderId) POSTs straight to PayFast
 src/lib/catalog.ts          cached storefront queries (unstable_cache, tag "catalog")
 src/lib/auth.ts             cookie sessions (HMAC-signed), scrypt passwords, requireAdmin()
 src/lib/pricing.ts          server-side cart pricing + voucher + shipping

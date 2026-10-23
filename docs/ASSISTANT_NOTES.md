@@ -10,6 +10,14 @@ A running log for whoever works on this next (human or AI): what was decided, wh
 - `PAYFAST_SANDBOX_STORE_ID` is empty (optional, so it's left out of the form).
 - The Steam CDN serves all cover art. If Steam changes URLs, images break; consider self-hosting the art later.
 
+## 2026-10-23 (evening): cart popup, direct PayFast, editable payment text, icons
+
+- **Add-to-cart popup:** `CartProvider.add()` shows `CartToast` (bottom centre, above the phone tab bar) with "View cart (n)" for 3.5s. "Buy now" passes `{ silent: true }`. The toast is hidden on /cart and /checkout.
+- **No intermediate page:** CheckoutForm creates the order, then `goToPayfast()` (`src/lib/payfast-client.ts`) builds and submits the PayFast form right away. `/checkout/pay/[orderId]` remains only as the "retry payment" page linked from an unpaid order. A `pageshow` listener un-sticks the busy button when the shopper comes back from PayFast with Back.
+- **Payment method title/subheading** are editable in Admin → Settings (`Setting` keys `checkout.paymentTitle` and `checkout.paymentSubtitle`, read via `getPaymentText()`). Empty values fall back to the defaults.
+- **Delivery charge setting:** Admin → Settings → Delivery charges (`Setting` key `shipping.fee`, 0 = free, default `DEFAULT_SHIPPING_FEE` 350). `getShippingFee()` is cached under tag `settings` and saving calls `updateTag`. It is used by `lib/pricing.ts` (authoritative), the cart (`components/CartView.tsx`, with `app/cart/page.tsx` as a server wrapper), the checkout, the product page and the /shipping policy (`deliveryLabel()`).
+- **Icons/meta:** `app/icon.svg` (yellow cut-corner X), `apple-icon.tsx` and `opengraph-image.tsx` (generated with `next/og`), `manifest.ts`, plus short OG/Twitter metadata in `layout.tsx`. `metadataBase` = `SITE_URL`, so share previews only work once that is the real domain.
+
 ## 2026-10-23 (later): glitch v3 and cyberpunk loaders
 
 The toned-down glitch (v2) was too invisible ("glitch khatm hi hogya"). v3 is layered: `<Glitch>` renders `data-text`, and tinted `::before/::after` copies slice across it in a ~0.5s burst, then rest (1.6s loop on hover, a 4s loop with `auto`). Product cards add two hue-shifted `.glitch-img` copies of the art (same URL, so the browser cache serves them) that slice sideways. Buttons get a light sweep (`shine`). HUD corner brackets (`.hud`) go on cards. The element itself never moves, which is what made v1 buggy.

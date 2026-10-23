@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { CartToast } from "@/components/CartToast";
 
 export interface CartLine {
   productId: string;
@@ -18,7 +19,8 @@ interface CartContextValue {
   count: number;
   subtotal: number;
   ready: boolean;
-  add: (line: Omit<CartLine, "quantity">, quantity?: number) => void;
+  /** Shows the "added — view cart" popup unless `silent` (e.g. Buy now). */
+  add: (line: Omit<CartLine, "quantity">, quantity?: number, options?: { silent?: boolean }) => void;
   setQuantity: (productId: string, quantity: number) => void;
   remove: (productId: string) => void;
   clear: () => void;
@@ -31,6 +33,8 @@ const KEY = "gx_cart_v1";
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
+  const [toast, setToast] = useState<{ id: number; title: string; image: string } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     try {
@@ -48,7 +52,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [lines, ready]);
 
-  const add = useCallback((line: Omit<CartLine, "quantity">, quantity = 1) => {
+  const add = useCallback((line: Omit<CartLine, "quantity">, quantity = 1, options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      clearTimeout(toastTimer.current);
+      setToast({ id: Date.now(), title: line.title, image: line.image });
+      toastTimer.current = setTimeout(() => setToast(null), 3500);
+    }
     setLines((current) => {
       const existing = current.find((l) => l.productId === line.productId);
       if (existing) {
@@ -86,7 +95,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [lines, ready, add, setQuantity, remove, clear],
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+      {toast && <CartToast key={toast.id} title={toast.title} image={toast.image} count={value.count} onClose={() => setToast(null)} />}
+    </CartContext.Provider>
+  );
 }
 
 export function useCart() {

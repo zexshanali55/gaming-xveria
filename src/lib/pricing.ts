@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { SHIPPING_FEE } from "@/lib/money";
+import { getShippingFee } from "@/lib/settings";
 import { checkVoucher } from "@/lib/vouchers";
 
 export interface RequestedLine {
@@ -20,7 +20,7 @@ export async function priceCart(requested: RequestedLine[], voucherCode?: string
 
   const subtotal = lines.reduce((n, l) => n + l.product.price * l.quantity, 0);
   const hasPhysical = lines.some((l) => l.product.edition === "PHYSICAL");
-  const shipping = hasPhysical ? SHIPPING_FEE : 0;
+  const shipping = hasPhysical ? await getShippingFee() : 0;
 
   let discount = 0;
   let appliedCode: string | null = null;

@@ -3,4 +3,9 @@ export function formatPrice(rupees: number): string {
 }
 
 /** Flat delivery for boxed discs; digital-only orders ship free. */
-export const SHIPPING_FEE = 350;
+/** Used until a fee is saved in Admin → Settings (see getShippingFee). */
+export const DEFAULT_SHIPPING_FEE = 350;
+
+export function deliveryLabel(fee: number): string {
+  return fee > 0 ? `Flat ${formatPrice(fee)} delivery anywhere in Pakistan` : "Free delivery anywhere in Pakistan";
+}

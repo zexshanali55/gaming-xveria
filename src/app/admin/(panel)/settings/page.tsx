@@ -1,7 +1,7 @@
 import { AdminTitle } from "@/components/admin";
-import { savePaymentMode, testPayfast } from "@/app/admin/(panel)/actions";
+import { savePaymentMode, savePaymentText, saveShippingFee, testPayfast } from "@/app/admin/(panel)/actions";
 import { configProblem, payfastConfigFor, type PayfastMode } from "@/lib/payfast";
-import { getPaymentMode } from "@/lib/settings";
+import { getPaymentMode, getPaymentText, getShippingFee, PAYMENT_TEXT_DEFAULTS } from "@/lib/settings";
 import { siteOrigin } from "@/lib/site-url";
 
 const MODES: { value: PayfastMode; title: string; note: string }[] = [
@@ -13,7 +13,7 @@ const MODES: { value: PayfastMode; title: string; note: string }[] = [
 type Search = Promise<{ test?: string; msg?: string }>;
 
 export default async function SettingsPage({ searchParams }: { searchParams: Search }) {
-  const [mode, query] = await Promise.all([getPaymentMode(), searchParams]);
+  const [mode, payText, shippingFee, query] = await Promise.all([getPaymentMode(), getPaymentText(), getShippingFee(), searchParams]);
   const origin = siteOrigin();
   const local = /localhost|127\.0\.0\.1/.test(origin);
 
@@ -43,6 +43,35 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
             );
           })}
           <button className="btn-volt mt-2">Save mode</button>
+        </form>
+      </section>
+
+      <section className="mt-6 max-w-3xl border border-line bg-panel p-5 sm:p-6">
+        <h2 className="font-display text-sm font-black uppercase tracking-[0.15em]">Delivery charges</h2>
+        <p className="mt-1 text-sm text-ink-dim">Flat charge added to any order with a physical disc. Set <b className="text-ink">0</b> for free delivery. Digital keys never pay delivery.</p>
+        <form action={saveShippingFee} className="mt-5 flex flex-wrap items-end gap-3">
+          <label className="block">
+            <span className="label">Charge (Rs)</span>
+            <input name="fee" type="number" min={0} max={100000} step={1} required defaultValue={shippingFee} className="field w-40" />
+          </label>
+          <button className="btn-volt">Save</button>
+          <span className="pb-3 text-sm text-ink-dim">Now: <span className={shippingFee ? "text-volt" : "text-ok"}>{shippingFee ? `Rs ${shippingFee}` : "Free"}</span></span>
+        </form>
+      </section>
+
+      <section className="mt-6 max-w-3xl border border-line bg-panel p-5 sm:p-6">
+        <h2 className="font-display text-sm font-black uppercase tracking-[0.15em]">Payment method text</h2>
+        <p className="mt-1 text-sm text-ink-dim">What shoppers see for the payment option at checkout. Leave a field empty to use the default.</p>
+        <form action={savePaymentText} className="mt-5 space-y-4">
+          <label className="block">
+            <span className="label">Title</span>
+            <input name="title" maxLength={60} defaultValue={payText.title} placeholder={PAYMENT_TEXT_DEFAULTS.title} className="field" />
+          </label>
+          <label className="block">
+            <span className="label">Subheading</span>
+            <textarea name="subtitle" maxLength={240} rows={3} defaultValue={payText.subtitle} placeholder={PAYMENT_TEXT_DEFAULTS.subtitle} className="field" />
+          </label>
+          <button className="btn-volt">Save text</button>
         </form>
       </section>
 
